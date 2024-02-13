@@ -338,7 +338,7 @@ end
 ---
 ---@param path (string) Path to normalize
 ---@param opts table|nil Options:
----             - expand_env: boolean Expand environment variables (default: true)
+---             - expand_env: (boolean) Expand environment variables. Defaults to true.
 ---@return (string) Normalized path
 function M.normalize(path, opts)
   opts = opts or {}
@@ -360,11 +360,17 @@ function M.normalize(path, opts)
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  path = path:gsub('\\', '/'):gsub('/+', '/')
-  if iswin and path:match('^%w:/$') then
-    return path
+  path = path:gsub('\\', '/')
+  local is_unc = path:match('^//%w')
+  path = path:gsub('/+', '/'):gsub('/$', '')
+  if iswin then
+    if is_unc then
+      return '/'..path
+    elseif path:match('^%w:/$') then
+      return path
+    end
   end
-  return (path:gsub('(.)/$', '%1'))
+  return path
 end
 
 return M
